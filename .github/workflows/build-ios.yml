@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          submodules: false # Keep this false to avoid the initial crash
+          submodules: false
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -26,12 +26,11 @@ jobs:
 
       - name: Build Shared Kotlin Framework
         run: |
-          # Force gradle to build the framework binaries while completely ignoring any missing submodules
-          ./gradlew :composeApp:assembleXcframwork --no-daemon || ./gradlew :composeApp:compileKotlinIosArm64 --no-daemon
+          # Only run the task that successfully checked green in your logs
+          ./gradlew :composeApp:assembleXcframework --no-daemon
 
       - name: Build Unsigned Native Xcode Project
         run: |
-          # Find whatever Xcode project folder exists dynamically
           XCODE_PROJ=$(ls -d iosApp/*.xcodeproj)
           XCODE_NAME=$(basename "$XCODE_PROJ" .xcodeproj)
           
@@ -46,7 +45,7 @@ jobs:
       - name: Package App to IPA
         run: |
           mkdir -p Payload
-          # Locate the native built application and wrap it up
+          # Grabs the generated app bundle from the build products
           find . -name "*.app" -type d -exec cp -R {} Payload/Nuvio.app \;
           zip -r Nuvio.ipa Payload
 
