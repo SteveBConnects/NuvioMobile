@@ -24,30 +24,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Compile Kotlin to iOS Framework
-        run: ./gradlew :composeApp:compileKotlinIosSimulatorArm64
-
-      - name: Find and Build Xcode Project
+      - name: Run Official Nuvio Build Script
         run: |
-          # Dynamically finds the correct .xcodeproj file inside the iosApp directory
-          XCODE_PROJ=$(ls -d iosApp/*.xcodeproj)
-          XCODE_NAME=$(basename "$XCODE_PROJ" .xcodeproj)
-          
-          echo "Found project: $XCODE_NAME"
-          
-          xcodebuild -project "$XCODE_PROJ" \
-                     -scheme "$XCODE_NAME" \
-                     -sdk iphoneos \
-                     -configuration Release \
-                     CODE_SIGNING_ALLOWED=NO \
-                     CODE_SIGNING_REQUIRED=NO \
-                     clean build
+          chmod +x ./scripts/build-distribution.sh
+          ./scripts/build-distribution.sh
+        env:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
 
-      - name: Package into IPA
+      - name: Package App Package to IPA
         run: |
           mkdir -p Payload
-          # Grabs whatever built .app file came out of the compilation process
-          mv iosApp/build/Release-iphoneos/*.app Payload/Nuvio.app 2>/dev/null || mv build/ios/iphoneos/*.app Payload/Nuvio.app
+          # Finds the compiled app bundle and drops it into a standard sideloading shell
+          find . -name "*.app" -type d -exec cp -R {} Payload/Nuvio.app \;
           zip -r Nuvio.ipa Payload
 
       - name: Upload Finished File
