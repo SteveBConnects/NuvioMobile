@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Code Base
         uses: actions/checkout@v4
         with:
-          submodules: false # Disables Git submodule logic since MPVKit is now a plain folder
+          submodules: false
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -27,6 +27,13 @@ jobs:
       - name: Build Shared Kotlin Framework
         run: |
           ./gradlew :composeApp:assembleXcfMultiplatform --no-daemon || ./gradlew :composeApp:assembleReleaseXcfMultiplatform --no-daemon
+
+      - name: Strip Xcode Embedded Build Scripts
+        run: |
+          XCODE_PROJ=$(ls -d iosApp/*.xcodeproj)
+          # Programmatically scrub Xcode's internal project file to drop the broken submodule script phases
+          sed -i '' '/externalSTB/d' "$XCODE_PROJ/project.pbxproj" || true
+          sed -i '' '/git submodule/d' "$XCODE_PROJ/project.pbxproj" || true
 
       - name: Build Unsigned Xcode Project
         run: |
