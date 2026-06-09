@@ -1,6 +1,7 @@
 name: Build and Package Mobile Media Streamer iOS
 
 on:
+  on:
   push:
     branches: [ main, cmp-rewrite ]
   workflow_dispatch:
@@ -16,16 +17,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Step 1: Turn this off so the ghost 'libass-android' cache doesn't crash the build on line 1
           submodules: false
 
       - name: Purge Broken Git Cache and Sync MPVKit
         run: |
-          # Step 2: Forcefully unregister the ghost android module from Git's internal tracking
           git submodule deinit -f libass-android || true
           rm -rf .git/modules/libass-android || true
-          
-          # Step 3: Explicitly initialize and update ONLY the working MPVKit module
           git submodule update --init --recursive MPVKit
 
       - name: Set up JDK 17
@@ -39,7 +36,8 @@ jobs:
 
       - name: Build Shared Kotlin Framework
         run: |
-          ./gradlew :composeApp:assembleXcframework --no-daemon
+          # Fixed the missing letters in the Multiplatform task command
+          ./gradlew :composeApp:assembleXcfMultiplatform --no-daemon || ./gradlew :composeApp:assembleReleaseXcfMultiplatform --no-daemon
 
       - name: Build Unsigned Xcode Project
         run: |
