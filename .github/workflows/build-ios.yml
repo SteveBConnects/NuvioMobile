@@ -1,7 +1,6 @@
 name: Build and Package Mobile Media Streamer iOS
 
 on:
-  on:
   push:
     branches: [ main, cmp-rewrite ]
   workflow_dispatch:
@@ -36,7 +35,6 @@ jobs:
 
       - name: Build Shared Kotlin Framework
         run: |
-          # Fixed the missing letters in the Multiplatform task command
           ./gradlew :composeApp:assembleXcfMultiplatform --no-daemon || ./gradlew :composeApp:assembleReleaseXcfMultiplatform --no-daemon
 
       - name: Build Unsigned Xcode Project
