@@ -1,9 +1,9 @@
-name: Build and Package Mobile Media Streamer iOS Build
+name: Build and Package Mobile Media Streamer iOS
 
 on:
   push:
     branches: [ main, cmp-rewrite ]
-  workflow_dispatch: # Allows manually triggering a build anytime
+  workflow_dispatch:
 
 jobs:
   build:
@@ -27,10 +27,16 @@ jobs:
       - name: Compile Kotlin to iOS Framework
         run: ./gradlew :composeApp:compileKotlinIosSimulatorArm64
 
-      - name: Build Unsigned Xcode Project
+      - name: Find and Build Xcode Project
         run: |
-          xcodebuild -project iosApp/iosApp.xcodeproj \
-                     -scheme iosApp \
+          # Dynamically finds the correct .xcodeproj file inside the iosApp directory
+          XCODE_PROJ=$(ls -d iosApp/*.xcodeproj)
+          XCODE_NAME=$(basename "$XCODE_PROJ" .xcodeproj)
+          
+          echo "Found project: $XCODE_NAME"
+          
+          xcodebuild -project "$XCODE_PROJ" \
+                     -scheme "$XCODE_NAME" \
                      -sdk iphoneos \
                      -configuration Release \
                      CODE_SIGNING_ALLOWED=NO \
@@ -40,7 +46,8 @@ jobs:
       - name: Package into IPA
         run: |
           mkdir -p Payload
-          mv iosApp/build/Release-iphoneos/iosApp.app Payload/Nuvio.app
+          # Grabs whatever built .app file came out of the compilation process
+          mv iosApp/build/Release-iphoneos/*.app Payload/Nuvio.app 2>/dev/null || mv build/ios/iphoneos/*.app Payload/Nuvio.app
           zip -r Nuvio.ipa Payload
 
       - name: Upload Finished File
